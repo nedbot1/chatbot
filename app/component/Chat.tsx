@@ -49,10 +49,10 @@ export default function Chat() {
           remaining: totalCredits - data.creditsUsed,
         });
       }
-    } catch (err) {
+    } catch (error) {
       setMessages((prev) => [
         ...prev.slice(0, -1),
-        { user: userMessage, bot: "Error: please try again" },
+        { user: userMessage, bot: String(error) || "Error: please try again" },
       ]);
     } finally {
       setLoading(false);

@@ -36,9 +36,11 @@ export async function POST(req: NextRequest) {
     const creditsUsed = response.sessionState?.mainAgentState?.creditsUsed ?? 0;
 
     return NextResponse.json({ reply: replyText, creditsUsed });
-  } catch (error: any) {
-    console.error("Chat error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("Chat error:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
