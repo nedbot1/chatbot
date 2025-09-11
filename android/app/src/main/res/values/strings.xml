@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GK Chatbot</string>
+    <string name="title_activity_main">GK Chatbot</string>
+    <string name="package_name">com.gk.chatbot</string>
+    <string name="custom_url_scheme">com.gk.chatbot</string>
+</resources>

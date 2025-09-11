@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { CodebuffClient } from "@codebuff/sdk";
 
 export async function POST(req: NextRequest) {
+  // Add CORS headers for mobile app
+  const response = new NextResponse();
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  
   try {
     const { message } = await req.json();
     if (!message)
@@ -35,13 +41,33 @@ export async function POST(req: NextRequest) {
     // Extract credits used
     const creditsUsed = response.sessionState?.mainAgentState?.creditsUsed ?? 0;
 
-    return NextResponse.json({ reply: replyText, creditsUsed });
+    const jsonResponse = NextResponse.json({ reply: replyText, creditsUsed });
+    jsonResponse.headers.set('Access-Control-Allow-Origin', '*');
+    jsonResponse.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    jsonResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    return jsonResponse;
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     console.error("Chat error:", errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    const errorResponse = NextResponse.json({ error: errorMessage }, { status: 500 });
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    errorResponse.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    return errorResponse;
   }
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
 
 // import { NextRequest, NextResponse } from "next/server";

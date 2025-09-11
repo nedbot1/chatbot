@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { getApiUrl } from "../config/api";
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
+
 
 type Message = { user: string; bot?: string };
 
@@ -16,7 +19,7 @@ export default function Chat() {
     []
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode] = useState(true);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const totalCredits = 100;
@@ -35,21 +38,42 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
-      });
-      const data = await res.json();
+      // Check if we're in a Capacitor environment using the official method
+      const isCapacitor = Capacitor.isNativePlatform();
 
-      setMessages((prev) => [...prev, { user: "", bot: data.reply }]);
+      console.log('Capacitor platform:', Capacitor.getPlatform());
+      console.log('Is native platform:', isCapacitor);
+
+      let data;
+      if (isCapacitor) {
+        // Use CapacitorHttp directly for native platforms to bypass CORS
+        console.log('Using CapacitorHttp (native)');
+        const response = await CapacitorHttp.post({
+          url: getApiUrl('/api/chat'),
+          headers: { "Content-Type": "application/json" },
+          data: { message: userMessage },
+        });
+        data = response.data;
+      } else {
+        // Use regular fetch for web
+        console.log('Using regular fetch (web)');
+        const res = await fetch(getApiUrl('/api/chat'), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userMessage }),
+        });
+        data = await res.json();
+      }
+
+      setMessages((prev) => [...prev, { user: "", bot: data?.reply || "No response received" }]);
 
       // accumulate usage
-      if (data.creditsUsed !== undefined) {
-        const newUsed = usage.used + data.creditsUsed;
+      if (data?.creditsUsed !== undefined) {
+        const newUsed = usage.used + (data.creditsUsed || 0);
         setUsage({ used: newUsed, remaining: totalCredits - newUsed });
       }
     } catch (error) {
+      console.error('Request error:', error);
       setMessages((prev) => [
         ...prev,
         { user: "", bot: String(error) || "Error: please try again" },
